@@ -524,85 +524,91 @@ def depthMapToPointCloud(depthMap, depthStream, colorImage=None):
             raise Exception("Depth and color images must have save dimensions.")
 
 def writePCD(pointCloud, filename, ascii=False):
+    """
+    Stores pointcloud in .pcd format (PCD v0.7)
 
-    #fmt = filename.split(".")[-1]
-    fmt = filename[-3:]
-    print("File format: {}".format(fmt))
+    Format description: http://www.pointclouds.org/documentation/tutorials/pcd_file_format.php
+    """
 
     height = pointCloud.shape[0]
     width = pointCloud.shape[1]
 
-    if fmt=="pcd":
-        with open(filename, 'w') as f:
-            f.write("# .PCD v.7 - Point Cloud Data file format\n")
-            f.write("VERSION .7\n")
-            if pointCloud.shape[2] == 3:
-                f.write("FIELDS x y z\n")
-                f.write("SIZE 4 4 4\n")
-                f.write("TYPE F F F\n")
-                f.write("COUNT 1 1 1\n")
-            else:
-                f.write("FIELDS x y z rgb\n")
-                f.write("SIZE 4 4 4 4\n")
-                f.write("TYPE F F F F\n")
-                f.write("COUNT 1 1 1 1\n")
-            f.write("WIDTH %d\n" % width)
-            f.write("HEIGHT %d\n" % height)
-            f.write("VIEWPOINT 0 0 0 1 0 0 0\n")
-            f.write("POINTS %d\n" % (height * width))
-            if ascii:
-              f.write("DATA ascii\n")
-              for row in range(height):
-                for col in range(width):
-                    if pointCloud.shape[2]== 3:
-                        f.write("%f %f %f\n" % tuple(pointCloud[row, col, :]))
-                    else:
-                        f.write("%f %f %f" % tuple(pointCloud[row, col, :3]))
-                        r = int(pointCloud[row, col, 3])
-                        g = int(pointCloud[row, col, 4])
-                        b = int(pointCloud[row, col, 5])
-                        rgb_int = (r << 16) | (g << 8) | b
-                        packed = pack('i', rgb_int)
-                        rgb = unpack('f', packed)[0]
-                        f.write(" %.12e\n" % rgb)
-            else:
-              f.write("DATA binary\n")
-              if pointCloud.shape[2] == 6:
-                  dt = np.dtype([('x', np.float32),
-                                 ('y', np.float32),
-                                 ('z', np.float32),
-                                 ('r', np.uint8),
-                                 ('g', np.uint8),
-                                 ('b', np.uint8),
-                                 ('I', np.uint8)])
-                  pointCloud_tmp = np.zeros((6, height*width, 1), dtype=dt)
-                  for i, k in enumerate(['x', 'y', 'z', 'r', 'g', 'b']):
-                      pointCloud_tmp[k] = pointCloud[:, :, i].reshape((height*width, 1))
-                  pointCloud_tmp.tofile(f)
-              else:
-                  dt = np.dtype([('x', np.float32),
-                                 ('y', np.float32),
-                                 ('z', np.float32),
-                                 ('I', np.uint8)])
-                  pointCloud_tmp = np.zeros((3, height*width, 1), dtype=dt)
-                  for i, k in enumerate(['x', 'y', 'z']):
-                      pointCloud_tmp[k] = pointCloud[:, :, i].reshape((height*width, 1))
-                  pointCloud_tmp.tofile(f)
+    with open(filename, 'w') as f:
+        f.write("# .PCD v.7 - Point Cloud Data file format\n")
+        f.write("VERSION .7\n")
+        if pointCloud.shape[2] == 3:
+            f.write("FIELDS x y z\n")
+            f.write("SIZE 4 4 4\n")
+            f.write("TYPE F F F\n")
+            f.write("COUNT 1 1 1\n")
+        else:
+            f.write("FIELDS x y z rgb\n")
+            f.write("SIZE 4 4 4 4\n")
+            f.write("TYPE F F F F\n")
+            f.write("COUNT 1 1 1 1\n")
+        f.write("WIDTH %d\n" % width)
+        f.write("HEIGHT %d\n" % height)
+        f.write("VIEWPOINT 0 0 0 1 0 0 0\n")
+        f.write("POINTS %d\n" % (height * width))
+        if ascii:
+          f.write("DATA ascii\n")
+          for row in range(height):
+            for col in range(width):
+                if pointCloud.shape[2]== 3:
+                    f.write("%f %f %f\n" % tuple(pointCloud[row, col, :]))
+                else:
+                    f.write("%f %f %f" % tuple(pointCloud[row, col, :3]))
+                    r = int(pointCloud[row, col, 3])
+                    g = int(pointCloud[row, col, 4])
+                    b = int(pointCloud[row, col, 5])
+                    rgb_int = (r << 16) | (g << 8) | b
+                    packed = pack('i', rgb_int)
+                    rgb = unpack('f', packed)[0]
+                    f.write(" %.12e\n" % rgb)
+        else:
+          f.write("DATA binary\n")
+          if pointCloud.shape[2] == 6:
+              dt = np.dtype([('x', np.float32),
+                             ('y', np.float32),
+                             ('z', np.float32),
+                             ('r', np.uint8),
+                             ('g', np.uint8),
+                             ('b', np.uint8),
+                             ('I', np.uint8)])
+              pointCloud_tmp = np.zeros((6, height*width, 1), dtype=dt)
+              for i, k in enumerate(['x', 'y', 'z', 'r', 'g', 'b']):
+                  pointCloud_tmp[k] = pointCloud[:, :, i].reshape((height*width, 1))
+              pointCloud_tmp.tofile(f)
+          else:
+              dt = np.dtype([('x', np.float32),
+                             ('y', np.float32),
+                             ('z', np.float32),
+                             ('I', np.uint8)])
+              pointCloud_tmp = np.zeros((3, height*width, 1), dtype=dt)
+              for i, k in enumerate(['x', 'y', 'z']):
+                  pointCloud_tmp[k] = pointCloud[:, :, i].reshape((height*width, 1))
+              pointCloud_tmp.tofile(f)
 
-    elif fmt=="obj":
-        with open(filename, 'w') as f:
-            f.write("# Wavefront .obj file format\n")
-            if ascii:
-                for row in range(height):
-                  for col in range(width):
-                      if pointCloud.shape[2]== 3:
-                          f.write("v %f %f %f\n" % tuple(pointCloud[row, col, :]))
-                      else:
-                          print("Color not supported")
-            else:
-                print("Binary not supported")
+def writeOBJ(pointCloud, filename):
+    """
+    Stores pointcloud as geometric vertices in .obj (Wavefront) format
 
- 
+    Format description: https://en.wikipedia.org/wiki/Wavefront_.obj_file
+    This method only represents pointclouds as vertices without w coords
+    """
+
+    height = pointCloud.shape[0]
+    width = pointCloud.shape[1]
+
+    with open(filename, 'w') as f:
+        f.write("# Wavefront .obj file format\n")
+        for row in range(height):
+            for col in range(width):
+                if pointCloud.shape[2]== 3:
+                    f.write("v %f %f %f\n" % tuple(pointCloud[row, col, :]))
+                else:
+                    print("Color not supported")
+
 def readPCD(filename):
     with open(filename, 'rb') as f:
         #"# .PCD v.7 - Point Cloud Data file format\n"
