@@ -425,7 +425,7 @@ cdef _depthMapToPointCloudXYZ(np.ndarray[np.float_t, ndim=3] pointCloud,
             c_openni2.convertDepthToWorld(depthStream._stream, x, y, depthMap[y,x],
                                           &worldX, &worldY, &worldZ)
             pointCloud[y,x,0] = worldX
-            pointCloud[y,x,1] = -worldY
+            pointCloud[y,x,1] = worldY
             pointCloud[y,x,2] = worldZ
 
 cdef _depthMapToPointCloudXYZRGB(np.ndarray[np.float_t, ndim=3] pointCloud,
@@ -445,7 +445,7 @@ cdef _depthMapToPointCloudXYZRGB(np.ndarray[np.float_t, ndim=3] pointCloud,
             c_openni2.convertDepthToWorld(depthStream._stream, x, y, depthMap[y,x],
                                           &worldX, &worldY, &worldZ)
             pointCloud[y,x,0] = worldX
-            pointCloud[y,x,1] = -worldY
+            pointCloud[y,x,1] = worldY
             pointCloud[y,x,2] = worldZ
             pointCloud[y,x,3] = colorImage[y,x,0]
             pointCloud[y,x,4] = colorImage[y,x,1]
@@ -468,7 +468,7 @@ cdef _depthMapToPointCloudXYZRGB_IR(np.ndarray[np.float_t, ndim=3] pointCloud,
             c_openni2.convertDepthToWorld(depthStream._stream, x, y, depthMap[y,x],
                                           &worldX, &worldY, &worldZ)
             pointCloud[y,x,0] = worldX
-            pointCloud[y,x,1] = -worldY
+            pointCloud[y,x,1] = worldY
             pointCloud[y,x,2] = worldZ
             pointCloud[y,x,3] = irImage[y,x]
             pointCloud[y,x,4] = irImage[y,x]
