@@ -70,7 +70,7 @@ cdef class Device(object):
                     _stream.stop()
                     _stream.destroy()
             self._streams.clear()
-        
+
             self._device.close()
 
     def __init__(self, uri):
@@ -425,7 +425,7 @@ cdef _depthMapToPointCloudXYZ(np.ndarray[np.float_t, ndim=3] pointCloud,
             c_openni2.convertDepthToWorld(depthStream._stream, x, y, depthMap[y,x],
                                           &worldX, &worldY, &worldZ)
             pointCloud[y,x,0] = worldX
-            pointCloud[y,x,1] = -worldY
+            pointCloud[y,x,1] = worldY
             pointCloud[y,x,2] = worldZ
 
 cdef _depthMapToPointCloudXYZRGB(np.ndarray[np.float_t, ndim=3] pointCloud,
