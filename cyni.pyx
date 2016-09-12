@@ -618,7 +618,7 @@ def readPCD(filename):
         f.readline()
 
         # "FIELDS x y z\n"
-        fields = f.readline().strip().split()[1:]
+        fields = [i.decode() for i in f.readline().strip().split()[1:]]
 
         if len(fields) == 3:
             rgb = False
@@ -632,7 +632,7 @@ def readPCD(filename):
         pointSize = np.sum(sizes)
 
         #"TYPE F F F\n"
-        types = f.readline().strip().split()[1:]
+        types = [i.decode() for i in f.readline().strip().split()[1:]]
 
         #"COUNT 1 1 1\n"
         counts = [int(x) for x in f.readline().strip().split()[1:]]
@@ -644,14 +644,15 @@ def readPCD(filename):
         height = int(f.readline().strip().split()[1])
 
         #"VIEWPOINT 0 0 0 1 0 0 0\n"
-        viewpoint = np.array(f.readline().strip().split()[1:])
+        bytelist = f.readline().strip().split()[1:]
+        viewpoint = np.array([int(i) for i in bytelist])
 
         #"POINTS %d\n" % height * width
         points = int(f.readline().strip().split()[1])
 
         #"DATA ascii\n"
-        format = f.readline().strip().split()[1]
-        ascii = format == 'ascii'
+        fmt = f.readline().strip().split()[1].decode()
+        ascii = fmt == 'ascii'
 
         if rgb:
             pointCloud = np.empty((height, width, 6))
