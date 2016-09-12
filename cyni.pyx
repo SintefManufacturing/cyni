@@ -70,7 +70,7 @@ cdef class Device(object):
                     _stream.stop()
                     _stream.destroy()
             self._streams.clear()
-        
+
             self._device.close()
 
     def __init__(self, uri):
@@ -500,7 +500,7 @@ def registerDepthMap(np.ndarray[np.uint16_t, ndim=2] depthMapIn, np.ndarray[np.u
 def getAnyDevice():
     deviceList = enumerateDevices()
     if not deviceList:
-        raise RuntimeError("Node device found")
+        raise RuntimeError("No device found")
     return Device(deviceList[0]['uri'])
 
 def depthMapToImage(image):
@@ -524,9 +524,16 @@ def depthMapToPointCloud(depthMap, depthStream, colorImage=None):
             raise Exception("Depth and color images must have save dimensions.")
 
 def writePCD(pointCloud, filename, ascii=False):
+    """
+    Stores pointcloud in .pcd format (PCD v0.7)
+
+    Format description: http://www.pointclouds.org/documentation/tutorials/pcd_file_format.php
+    """
+
+    height = pointCloud.shape[0]
+    width = pointCloud.shape[1]
+
     with open(filename, 'w') as f:
-        height = pointCloud.shape[0]
-        width = pointCloud.shape[1]
         f.write("# .PCD v.7 - Point Cloud Data file format\n")
         f.write("VERSION .7\n")
         if pointCloud.shape[2] == 3:
@@ -581,7 +588,27 @@ def writePCD(pointCloud, filename, ascii=False):
               for i, k in enumerate(['x', 'y', 'z']):
                   pointCloud_tmp[k] = pointCloud[:, :, i].reshape((height*width, 1))
               pointCloud_tmp.tofile(f)
- 
+
+def writeOBJ(pointCloud, filename):
+    """
+    Stores pointcloud as geometric vertices in .obj (Wavefront) format
+
+    Format description: https://en.wikipedia.org/wiki/Wavefront_.obj_file
+    This method only represents pointclouds as vertices without w coords
+    """
+
+    height = pointCloud.shape[0]
+    width = pointCloud.shape[1]
+
+    with open(filename, 'w') as f:
+        f.write("# Wavefront .obj file format\n")
+        for row in range(height):
+            for col in range(width):
+                if pointCloud.shape[2]== 3:
+                    f.write("v %f %f %f\n" % tuple(pointCloud[row, col, :]))
+                else:
+                    print("Color not supported")
+
 def readPCD(filename):
     with open(filename, 'rb') as f:
         #"# .PCD v.7 - Point Cloud Data file format\n"
@@ -591,7 +618,7 @@ def readPCD(filename):
         f.readline()
 
         # "FIELDS x y z\n"
-        fields = f.readline().strip().split()[1:]
+        fields = [i.decode() for i in f.readline().strip().split()[1:]]
 
         if len(fields) == 3:
             rgb = False
@@ -605,7 +632,7 @@ def readPCD(filename):
         pointSize = np.sum(sizes)
 
         #"TYPE F F F\n"
-        types = f.readline().strip().split()[1:]
+        types = [i.decode() for i in f.readline().strip().split()[1:]]
 
         #"COUNT 1 1 1\n"
         counts = [int(x) for x in f.readline().strip().split()[1:]]
@@ -617,14 +644,15 @@ def readPCD(filename):
         height = int(f.readline().strip().split()[1])
 
         #"VIEWPOINT 0 0 0 1 0 0 0\n"
-        viewpoint = np.array(f.readline().strip().split()[1:])
+        bytelist = f.readline().strip().split()[1:]
+        viewpoint = np.array([int(i) for i in bytelist])
 
         #"POINTS %d\n" % height * width
         points = int(f.readline().strip().split()[1])
 
         #"DATA ascii\n"
-        format = f.readline().strip().split()[1]
-        ascii = format == 'ascii'
+        fmt = f.readline().strip().split()[1].decode()
+        ascii = fmt == 'ascii'
 
         if rgb:
             pointCloud = np.empty((height, width, 6))
