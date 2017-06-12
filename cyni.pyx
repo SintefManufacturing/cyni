@@ -589,6 +589,34 @@ def writePCD(pointCloud, filename, ascii=False):
                   pointCloud_tmp[k] = pointCloud[:, :, i].reshape((height*width, 1))
               pointCloud_tmp.tofile(f)
 
+def writePLY(pointCloud, filename):
+    """
+    Stores pointcloud in .ply format
+    """
+
+    height = pointCloud.shape[0]
+    width = pointCloud.shape[1]
+
+    with open(filename, 'w') as f:
+        f.write("ply\n")
+        f.write("format ascii 1.0\n")
+        f.write("comment cyni\n")
+        f.write("element vertex {}\n".format(height*width))
+        
+        if pointCloud.shape[2] == 3:
+            f.write("property float x\n")
+            f.write("property float y\n")
+            f.write("property float z\n")
+
+        else:
+            print("Saving RGB ply files is not currently supported")
+
+        f.write("end_header\n")
+
+        for row in range(height):
+          for col in range(width):
+              f.write("%f %f %f\n" % tuple(pointCloud[row, col, :]))
+
 def writeOBJ(pointCloud, filename):
     """
     Stores pointcloud as geometric vertices in .obj (Wavefront) format
